@@ -25,7 +25,7 @@ const Announcement = require('../src/models/Announcement');
 
 const seedData = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/school_management');
+    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://skrul484_db_user:HGC1dvWgdq2jwl8s@cluster0.braloc4.mongodb.net/school_management');
     console.log(`Connected to MongoDB: ${conn.connection.host}`);
 
     console.log('Clearing old data...');
