@@ -22,13 +22,50 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Cookie Parser
 app.use(cookieParser());
 
-// Enable CORS
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true,
-  })
-);
+// Enable CORS with dynamic origin support (supports multiple origins, Vercel deployments, and local dev)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://schoolmanagement-vais3.vercel.app',
+  'https://schoolmanagement-alpha-eosin.vercel.app',
+];
+
+if (process.env.CLIENT_URL) {
+  // Support comma-separated URLs and automatically strip trailing slashes or '/api' paths
+  process.env.CLIENT_URL.split(',').forEach((url) => {
+    const cleaned = url.trim().replace(/\/api\/?$/, '').replace(/\/+$/, '');
+    if (cleaned && !allowedOrigins.includes(cleaned)) {
+      allowedOrigins.push(cleaned);
+    }
+  });
+}
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow server-to-server, curl, Postman, or requests without Origin header
+    if (!origin) return callback(null, true);
+
+    const cleanOrigin = origin.replace(/\/+$/, '');
+
+    // Allow explicitly listed origins, any localhost/127.0.0.1, or any *.vercel.app deployment
+    const isAllowed =
+      allowedOrigins.includes(cleanOrigin) ||
+      /\.vercel\.app$/.test(cleanOrigin) ||
+      /^http:\/\/localhost(:\d+)?$/.test(cleanOrigin) ||
+      /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(cleanOrigin);
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+};
+
+app.use(cors(corsOptions));
 
 // Dev logging
 if (process.env.NODE_ENV !== 'production') {
